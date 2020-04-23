@@ -1,0 +1,6 @@
+azure-iot-device~=2.0.0
+pyusb
+pyaudio
+aiohttp
+azure-storage-blob
+azure-mgmt-storage

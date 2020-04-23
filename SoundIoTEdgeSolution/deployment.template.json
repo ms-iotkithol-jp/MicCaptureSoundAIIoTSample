@@ -1,0 +1,208 @@
+{
+  "$schema-template": "2.0.0",
+  "modulesContent": {
+    "$edgeAgent": {
+      "properties.desired": {
+        "schemaVersion": "1.0",
+        "runtime": {
+          "type": "docker",
+          "settings": {
+            "minDockerVersion": "v1.25",
+            "loggingOptions": "",
+            "registryCredentials": {
+              "egacriotkitholv5": {
+                "username": "$CONTAINER_REGISTRY_USERNAME",
+                "password": "$CONTAINER_REGISTRY_PASSWORD",
+                "address": "$CONTAINER_REGISTRY_ADDRESS"
+              }
+            }
+          }
+        },
+        "systemModules": {
+          "edgeAgent": {
+            "type": "docker",
+            "settings": {
+              "image": "mcr.microsoft.com/azureiotedge-agent:1.0",
+              "createOptions": {}
+            }
+          },
+          "edgeHub": {
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "mcr.microsoft.com/azureiotedge-hub:1.0",
+              "createOptions": {
+                "HostConfig": {
+                  "PortBindings": {
+                    "5671/tcp": [
+                      {
+                        "HostPort": "5671"
+                      }
+                    ],
+                    "8883/tcp": [
+                      {
+                        "HostPort": "8883"
+                      }
+                    ],
+                    "443/tcp": [
+                      {
+                        "HostPort": "443"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "modules": {
+          "soundcapturemodule": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "env": {
+              "BLOB_ON_EDGE_MODULE": {
+                "value": "local-blob-storage"
+              },
+              "BLOB_ON_EDGE_ACCOUNT_NAME": {
+                "value": "localaccount"
+              },
+              "BLOB_ON_EDGE_ACCOUNT_KEY": {
+                "value": "1ojmb5CCb3S5IrwZCn+InQ=="
+              },
+              "SOUND_CONTAINER_NAME": {
+                "value": "sounds"
+              },
+              "MIC_DEVICE_NAME": {
+                "value": "ReSpeaker 4 Mic Array"
+              },
+              "MIC_DEVICE_NUM_OF_MIC": {
+                "value": 4
+              },
+              "SOUND_DATA_FOLDER":{
+                "value": "/sounddata"
+              }
+            },
+            "settings": {
+              "image": "${MODULES.SoundCaptureModule}",
+              "createOptions": {
+                "HostConfig": {
+                  "Binds": [
+                    "/dev/snd:/dev/snd",
+                    "/sounddata:/sounddata"
+                  ],
+                  "Privileged": true,
+                  "Devices": [
+                    {
+                      "PathOnHost": "/snd",
+                      "PathInContainer": "/snd",
+                      "CgroupPermissions": "mrw"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "local-blob-storage": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "mcr.microsoft.com/azure-blob-storage:latest",
+              "createOptions": {
+                "HostConfig": {
+                  "Binds": [
+                    "/srv/containerdata:/blobroot"
+                  ],
+                  "PortBindings": {
+                    "11002/tcp": [
+                      {
+                        "HostPort": "11002"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "env": {
+              "LOCAL_STORAGE_ACCOUNT_KEY": {
+                "value": "1ojmb5CCb3S5IrwZCn+InQ=="
+              },
+              "LOCAL_STORAGE_ACCOUNT_NAME": {
+                "value": "localaccount"
+              }
+            }
+          },
+          "SoundClassifierService": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "${MODULES.SoundClassifierService}",
+              "createOptions": {
+                "Binds": [
+                  "/sounddata:/sounddata"
+                ]
+              }
+            },
+            "env": {
+              "SOUND_DATA_FOLDER":{
+                "value": "/sounddata"
+              }
+            }
+          }
+        }
+      }
+    },
+    "$edgeHub": {
+      "properties.desired": {
+        "schemaVersion": "1.0",
+        "routes": {
+          "SoundCaptureModuleToIoTHub": "FROM /messages/modules/soundcapturemodule/outputs/output_status INTO $upstream",
+          "SoundCaptureModuleToClassify": "FROM /messages/modules/soundcapturemodule/outputs/output_data_file INTO BrokeredEndpoint(\"/modules/SoundClassifierService/inputs/input_sound_data\")",
+          "SoundClassifierServiceToIoTHub": "FROM /messages/modules/SoundClassifierService/outputs/output_classified INTO $upstream"
+        },
+        "storeAndForwardConfiguration": {
+          "timeToLiveSecs": 7200
+        }
+      }
+    },
+    "local-blob-storage": {
+      "properties.desired": {
+        "deviceAutoDeleteProperties": {
+          "deleteOn": true,
+          "deleteAfterMinutes": 5,
+          "retainWhileUploading": true
+        },
+        "deviceToCloudUploadProperties": {
+          "uploadOn": true,
+          "uploadOrder": "OldestFirst",
+          "cloudStorageConnectionString": "$CLOUD_STORAGE_CONNECTION_STRING",
+          "storageContainersForUpload": {
+            "sounds": {
+              "target": "edgesounds"
+            }
+          },
+          "deleteAfterUpload": true
+        }
+      }
+    },
+    "soundcapturemodule": {
+      "properties.desired": {
+        "capture-spec": {
+          "record-chunk": 1024,
+          "record-rate": 16000,
+          "record-width": 2,
+          "record-start-level": 1000,
+          "record-duration-msec": 500,
+          "capture-channels": "1,2,3,4",
+          "capture-order": false
+        }
+      }
+    }
+  }
+}

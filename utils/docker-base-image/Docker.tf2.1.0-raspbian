@@ -1,0 +1,35 @@
+FROM resin/raspberrypi3-debian:stretch
+
+RUN [ "cross-build-start" ]
+
+RUN apt-get update && \
+    apt-get install -y  libffi-dev libbz2-dev liblzma-dev  libncurses5-dev libgdbm-dev zlib1g-dev libreadline-dev libssl-dev tk-dev build-essential libncursesw5-dev libc6-dev openssl build-essential wget git libatlas-base-dev  liblapack-dev gfortran libboost-python1.62.0 python3-dev python3-pip libpython3-dev python3-numpy python3-h5py && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+RUN pip3 install --upgrade pip
+RUN pip install --upgrade setuptools
+
+RUN wget https://files.pythonhosted.org/packages/4b/4d/ae1c4d8e8b139afa9682054dd42df3b0e3b5c1731287933021b9fd7e9cc4/pybind11-2.4.3-py2.py3-none-any.whl && \
+    pip3 install pybind11-2.4.3-py2.py3-none-any.whl && \
+    rm -f *.whl
+
+RUN wget https://files.pythonhosted.org/packages/04/ab/e2eb3e3f90b9363040a3d885ccc5c79fe20c5b8a3caa8fe3bf47ff653260/scipy-1.4.1.tar.gz && \
+    tar -xf scipy-1.4.1.tar.gz && \
+    rm -f *.gz && \
+    cd scipy-1.4.1 && \
+    python3 setup.py build && \
+    python3 setup.py install && \
+    cd .. && \
+    rm -fr scipy-1.4.1 
+
+RUN wget https://storage.googleapis.com/tensorflow/raspberrypi/tensorflow-2.1.0-cp35-none-linux_armv7l.whl && \
+    pip3 install tensorflow-2.1.0-cp35-none-linux_armv7l.whl && \
+    rm -f *.whl
+
+# Cleanup
+RUN rm -rf /var/lib/apt/lists/* \
+    && apt-get -y autoremove
+
+RUN [ "cross-build-end" ]

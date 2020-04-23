@@ -1,0 +1,10 @@
+FROM embeddedgeorge/tf2.1.0-raspbian:stretch
+
+WORKDIR /app
+
+COPY requirements.txt ./
+RUN pip install -r requirements.txt
+
+COPY . .
+
+CMD [ "python3", "-u", "./main.py" ]

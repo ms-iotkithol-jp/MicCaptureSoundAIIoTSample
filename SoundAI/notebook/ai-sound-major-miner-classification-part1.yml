@@ -1,0 +1,12 @@
+ name: img-classification-part1-training
+dependencies:
+- pip:
+  - azureml-sdk
+  - azureml-widgets
+  - matplotlib
+  - sklearn
+  - pandas
+  - azureml-opendatasets
+  - azure-storage-blob>=12.0.0
+  - numpy
+  
