@@ -42,7 +42,7 @@ class SoundClassifier:
         wvinfo = wv.getparams()
         fs, data = read(datafile)
         sounds = []
-        if wvinfo['nchannels'] == 1:
+        if wvinfo.nchannels == 1:
             sounds.append(data)
         else:
             tdata = data.T
@@ -52,7 +52,7 @@ class SoundClassifier:
         predicted_results ={}
         for channel, data in enumerate(sounds):
             fft_data = take_fft(data, fs, fft, mels)
-            wav_dataset = divid_data_by_minimum_shape(fft_data, dataWidth)
+            wav_dataset = divid_data_by_minimum_shape(fft_data[0], dataWidth)
             data_of_sounds = np.zeros((len(wav_dataset),1, mels, dataWidth), dtype=np.float)
             for index, wd in enumerate(wav_dataset):
                 data_of_sounds[index][0] = wd
