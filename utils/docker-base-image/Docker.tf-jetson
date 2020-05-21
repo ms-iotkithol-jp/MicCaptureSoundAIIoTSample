@@ -15,8 +15,10 @@ RUN apt-get update && \
     apt-get install -y git
 
 RUN apt-get update && \
-    apt-get install -y  libffi-dev libbz2-dev liblzma-dev  libncurses5-dev libgdbm-dev zlib1g-dev libreadline-dev libssl-dev tk-dev build-essential libncursesw5-dev libc6-dev openssl build-essential wget libatlas-base-dev  liblapack-dev gfortran libboost-python1.62.0 python3-dev python3-pip libpython3-dev libhdf5-serial-dev hdf5-tools libhdf5-dev zip libblas-dev libjpeg8-dev && \
+    apt-get install -y  libffi-dev libbz2-dev liblzma-dev  libncurses5-dev libgdbm-dev zlib1g-dev libreadline-dev libssl-dev tk-dev build-essential libncursesw5-dev libc6-dev openssl build-essential wget libatlas-base-dev  liblapack-dev gfortran libboost-python1.62.0 python3-dev python3-pip libpython3-dev libhdf5-serial-dev hdf5-tools libhdf5-dev zip libblas-dev libjpeg8-dev llvm-7 && \
     rm -rf /var/lib/apt/lists/*
+RUN cd /usr/bin && \
+    ln -s llvm-config-7 llvm-config
 
 WORKDIR /build
 
@@ -25,10 +27,14 @@ RUN pip3 install --upgrade testresources  setuptools
 RUN pip3 install -U numpy==1.16.1 future==0.17.1 mock==3.0.5 h5py==2.9.0 keras_preprocessing==1.0.5 keras_applications==1.0.8 gast==0.2.2 futures protobuf pybind11
 #RUN pip3 install --pre --extra-index-url https://developer.download.nvidia.com/compute/redist/jp/v43 tensorflow
 RUN pip3 install --pre --extra-index-url https://developer.download.nvidia.com/compute/redist/jp/v43 tensorflow-gpu
+RUN pip3 install cython
+RUN pip3 install llvmlite
+RUN pip3 install librosa
+RUN pip3 install pyyaml
 
 # Cleanup
 RUN rm -rf /var/lib/apt/lists/* \
     && apt-get -y autoremove
 
 # RUN [ "cross-build-end" ]
- ENV LD_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu/tegra:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu/tegra:$LD_LIBRARY_PATH

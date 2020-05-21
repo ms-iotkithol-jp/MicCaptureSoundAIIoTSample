@@ -96,8 +96,8 @@
                   "Privileged": true,
                   "Devices": [
                     {
-                      "PathOnHost": "/snd",
-                      "PathInContainer": "/snd",
+                      "PathOnHost": "/dev/snd",
+                      "PathInContainer": "/dev/snd",
                       "CgroupPermissions": "mrw"
                     }
                   ]

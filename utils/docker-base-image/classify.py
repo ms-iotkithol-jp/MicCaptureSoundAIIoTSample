@@ -18,7 +18,7 @@ class SoundClassifier:
         self.version = '0.1.0'
         # For CSV Style
         # self.data_chunk = load_data_definition('sounddata.yml')
-        self.data_def = load_data_definition('sounddata-wav.yml')
+        self.data_def = load_data_definition('sounddata.yml')
 
     #model_file_path ='model/sound-classification-model.h5'
     # model name should be used other style

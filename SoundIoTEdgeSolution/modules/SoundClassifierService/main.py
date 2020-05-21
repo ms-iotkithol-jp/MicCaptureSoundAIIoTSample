@@ -13,13 +13,17 @@ import threading
 import requests
 from azure.iot.device.aio import IoTHubModuleClient
 from azure.iot.device import Message
-from classify import SoundClassifier
 
 async def main(data_folder_path):
     try:
         if not sys.version >= "3.5.3":
             raise Exception( "The sample requires python 3.5.3+. Current version of Python: %s" % sys.version )
         print ( "IoT Hub Client for Python" )
+
+        if sys.version < "3.6.0":
+            from classify_csv import SoundClassifier
+        else:
+            from classify import SoundClassifier
 
         # The client object is used to interact with your Azure IoT hub.
         module_client = IoTHubModuleClient.create_from_edge_environment()

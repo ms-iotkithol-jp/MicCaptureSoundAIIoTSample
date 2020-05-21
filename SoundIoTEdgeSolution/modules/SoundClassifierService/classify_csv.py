@@ -9,7 +9,7 @@ print('tensorflow version - '+tf.__version__)
 class SoundClassifier:
     def __init__(self):
         self.version = '0.1.0'
-        self.data_def = load_data_definition('sounddata.yml')
+        self.data_def = load_data_definition('sounddata-csv.yml')
 
     def load_model(self, model_file_path):
         self.model = models.load_model(model_file_path)

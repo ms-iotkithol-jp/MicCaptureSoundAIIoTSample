@@ -13,25 +13,42 @@ Build work is available both Windows and Raspbian
 
 ### Test 
 ```
-sudo docker create --name soundml -it embeddedgeorge/tf2.1.0-raspbian3:stretch bash
+sudo docker create --name soundml -it embeddedgeorge/tf2.1.0-raspbian:stretch bash
 sudo docker start -ia soundml
 ```
 ```
 mkdir /app
 exit
 ```
+#### Test by using WAV format
 ```
-sudo docker cp ./cherry-sound-20200218113643319806.csv soundml:/app
-sudo docker cp ./loadsounds.py  soundml:/app
-sudo docker cp ./test.py soundml:/app
-sudo docker cp ./sounddata.yml soundml:/app
+sudo docker cp ./fender-sound-20200209170603399214.wav soundml:/app
+sudo docker cp ./loadwavsounds.py  soundml:/app
+sudo docker cp ./test-wav.py soundml:/app
+sudo docker cp ./classify.py soundml:/app
+sudo docker cp ./sounddata-wav.yml soundml:/app
 sudo docker cp ./sound-classification-model.h5 soundml:/app 
 sudo docker start -ia soundml
 ```
 ```
 cd /app
-python3 test.py
+python3 test-wav.py
 ```
+#### Test by using CSV format (Optional)  
+※ Current H5 model is trained by wav format so please change it when you want try by CSV format.
+```
+sudo docker cp ./cherry-sound-20200218113643319806.csv soundml:/app
+sudo docker cp ./loadsounds.py  soundml:/app
+sudo docker cp ./test-csv.py soundml:/app
+sudo docker cp ./sounddata-csv.yml soundml:/app
+sudo docker cp ./sound-classification-model.h5 soundml:/app 
+sudo docker start -ia soundml
+```
+```
+cd /app
+python3 test-csv.py
+```
+
 
 ---
 ## For Nvidia Jetoson Nano 
@@ -54,15 +71,32 @@ sudo docker start -ia soundml
 mkdir /app
 exit
 ```
+
+#### Test by using WAV format
 ```
-sudo docker cp ./cherry-sound-20200218113643319806.csv soundml:/app
-sudo docker cp ./loadsounds.py  soundml:/app
-sudo docker cp ./test.py soundml:/app
-sudo docker cp ./sounddata.yml soundml:/app
+sudo docker cp ./fender-sound-20200209170603399214.wav soundml:/app
+sudo docker cp ./loadwavsounds.py  soundml:/app
+sudo docker cp ./classify.py soundml:/app
+sudo docker cp ./test-wav.py soundml:/app
+sudo docker cp ./sounddata-wav.yml soundml:/app
 sudo docker cp ./sound-classification-model.h5 soundml:/app 
 sudo docker start -ia soundml
 ```
 ```
 cd /app
-python3 test.py
+python3 test-wav.py
+```
+#### Test by using CSV format (Optional)  
+※ Current H5 model is trained by wav format so please change it when you want try by CSV format.
+```
+sudo docker cp ./cherry-sound-20200218113643319806.csv soundml:/app
+sudo docker cp ./loadsounds.py  soundml:/app
+sudo docker cp ./test-csv.py soundml:/app
+sudo docker cp ./sounddata-csv.yml soundml:/app
+sudo docker cp ./sound-classification-model.h5 soundml:/app 
+sudo docker start -ia soundml
+```
+```
+cd /app
+python3 test-csv.py
 ```

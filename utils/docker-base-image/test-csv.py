@@ -1,7 +1,7 @@
 import numpy as np
 from loadsounds import parse_file, load_data_definition, reshape_dataset
 
-data_def_file = 'sounddata.yml'
+data_def_file = 'sounddata-csv.yml'
 datafile = 'cherry-sound-20200218113643319806.csv'
 data_chunk = load_data_definition(data_def_file)
 csv_dataset = parse_file(datafile,np.array([]),data_chunk, by_channel=True)
@@ -18,7 +18,7 @@ from tensorflow.keras import datasets, layers, models
 
 print('tensorflow version - '+tf.__version__)
 
-model_file_path ='sound-classification-model.h5'
+model_file_path ='sound-classification-csv-model.h5'
 # model name should be used other style
 model = models.load_model(model_file_path)
 
