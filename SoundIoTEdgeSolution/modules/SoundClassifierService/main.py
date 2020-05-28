@@ -11,8 +11,75 @@ import asyncio
 from six.moves import input
 import threading
 import requests
-from azure.iot.device.aio import IoTHubModuleClient
+from azure.iot.device import IoTHubModuleClient
 from azure.iot.device import Message
+
+import tarfile
+import shutil
+
+def decompress_files(filename, dest_forder):
+    os.makedirs(dest_forder,exist_ok=True)
+    tar = tarfile.open(filename, "r:gz")
+    tar.extractall(dest_forder)
+    tar.close()
+
+def parse_desired_property_request(predictSpec, module_client, sound_classifer):
+    modelFileKey = 'model-file'
+    if modelFileKey in predictSpec:
+        modelUrl = predictSpec[modelFileKey]['url']
+        modelFileName = predictSpec[modelFileKey]['name']
+        print('Receive request of model update - {} - {}'.format(modelFileName, modelUrl))
+        response = requests.get(modelUrl)
+        if response.status_code == 200:
+            os.makedirs('model',exist_ok=True)
+            saveFileName = os.path.join('model',modelFileName)
+            with open(saveFileName, 'wb') as saveFile:
+                saveFile.write(response.content)
+                print('Succeeded to download new model')
+                if modelFileName.endswith('.tar.gz'):
+                    print('try to decompress - {}'.format(saveFileName))
+                    decompress_files(saveFileName, 'model')
+                    print('decompress done.')
+                    os.remove(saveFileName)
+                    saveFileName = saveFileName[:len(saveFileName)-len('.tar.gz')]
+                    print('new model is {}'.format(saveFileName))
+                sound_classifer.load_model(saveFileName)
+                print('loaded learned model!')
+                for existingFile in os.listdir('model'):
+                    print('compare name - {} <-> {}'.format(existingFile, saveFileName))
+                    if os.path.basename(existingFile) != saveFileName:
+                        print('Found old model')
+                        old_file_path = os.path.join('model', existingFile)
+                        if os.path.isfile(old_file_path):
+                            os.remove(old_file_path)
+                        else:
+                            shutil.rmtree(old_file_path)
+#                sound_classifer.load_model(saveFileName)
+                module_client.patch_twin_reported_properties({'current-model':predictSpec[modelFileKey]})
+        else:
+            print('Failed to download new model - {}'.format(response.status_code))
+
+    dataDefFileKey = 'data-def-file'
+    if dataDefFileKey in predictSpec:
+        dataDefUrl = predictSpec[dataDefFileKey]['url']
+        dataDefFileName = predictSpec[dataDefFileKey]['name']
+        print('Receive request of model update - {} - {}'.format(dataDefFileName, dataDefUrl))
+        response = requests.get(dataDefUrl)
+        if response.status_code == 200:
+            os.makedirs('data-def',exist_ok=True)
+            saveFileName = os.path.join('data-def',dataDefFileName)
+            with open(saveFileName, 'wb') as saveFile:
+                saveFile.write(response.content)
+                print('Succeeded to download new data def file')
+            for existingFile in os.listdir('data-def'):
+                if existingFile != os.path.basename(saveFileName):
+                    old_file_path = os.path.join('data_def',existingFile)
+                    os.remove(old_file_path)
+            sound_classifer.update_data_def(saveFileName)
+            module_client.patch_twin_reported_properties({'current-data-def':predictSpec[dataDefFileKey]})
+        else:
+            print('Failed to download new model - {}'.format(response.status_code))
+        print("Learned model and data definition file have been updated.")
 
 async def main(data_folder_path):
     try:
@@ -23,16 +90,23 @@ async def main(data_folder_path):
         if sys.version < "3.6.0":
             from classify_csv import SoundClassifier
         else:
-            from classify import SoundClassifier
+            from classify_wav import SoundClassifier
 
         # The client object is used to interact with your Azure IoT hub.
         module_client = IoTHubModuleClient.create_from_edge_environment()
 
         # connect the client.
-        await module_client.connect()
+        module_client.connect()
+        print("Connected to Edge Runtime.")
+
+        currentTwin = module_client.get_twin()
+        print('Resolve current spec...')
+        predictSpec = currentTwin['desired']
+        sound_classifer = SoundClassifier()
+        parse_desired_property_request(predictSpec, module_client, sound_classifer)
 
         # initialize sound classifier
-        sound_classifer = SoundClassifier()
+
         for file in os.listdir('model'):
             if file.rfind('.h5') > 0:
                 model_file_path = os.path.join('model',file)
@@ -43,32 +117,12 @@ async def main(data_folder_path):
             currentTwin = module_client.get_twin()
             print('Resolve current spec...')
             predictSpec = currentTwin['desired']
-            chunkKey = 'record-chunk'
-            if chunkKey in predictSpec:
-                soundclassifier.set_data_chunk(predictSpec['record-chunk'])
-            modelFileKey = 'model-file'
-            if modelFileKey in predictSpec:
-                modelUrl = predictSpec[modelFileKey]['url']
-                modelFileName = predictSpec[modelFileKey]['name']
-                print('Receive request of model update - {} - {}'.format(modelFileName, modelUrl))
-                response = requests.get(modelUrl)
-                if response.status_code == 200:
-                    saveFileName = os.path.join('model',modelFileName)
-                    with open(saveFileName, 'wb') as saveFile:
-                        saveFile.write(response.content)
-                    print('Succeeded to download new model')
-                    soundclassifier.load_model(saveFileName)
-                    for file in os.listdir('model'):
-                        if file != saveFileName:
-                            os.remove(file)
-                    module_client.patch_twin_reported_properties({'current-mode':predictSpec[modelFileKey]})
-                else:
-                    print('Failed to download new model - {}'.format(response.status_code))
+            parse_desired_property_request(predictSpec, module_client, sound_classifer)
 
         # define behavior for receiving an input message on input_sound_data
         async def input_sound_data_listener(module_client, soundclassifier):
             while True:
-                input_message = await module_client.receive_message_on_input("input_sound_data")  # blocking call
+                input_message = module_client.receive_message_on_input("input_sound_data")  # blocking call
                 try:
                     print("the data in the message received on input_sound_data was ")
                     print(input_message.data)
@@ -83,7 +137,7 @@ async def main(data_folder_path):
                     content = json.dumps(outputMessageJson)
                     message = Message(content)
                     message.custom_properties['message-source']='sound-classifier'
-                    await module_client.send_message_to_output(outputMessageJson, "output_classified")
+                    module_client.send_message_to_output(outputMessageJson, "output_classified")
                 except Exception as e:
                     print('Failed to classify - {0}'.format(e))
                 
@@ -116,7 +170,7 @@ async def main(data_folder_path):
         listeners.cancel()
 
         # Finally, disconnect
-        await module_client.disconnect()
+        module_client.disconnect()
 
     except Exception as e:
         print ( "Unexpected error %s " % e )

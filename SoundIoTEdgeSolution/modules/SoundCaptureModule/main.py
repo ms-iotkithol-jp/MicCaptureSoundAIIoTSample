@@ -26,7 +26,19 @@ class CaptureSpec:
         self.CAPTURE_ORDER = captureSpec['capture-order']
         self.CLASSIFY_ON_EDGE = False
         if 'classify-on-edge' in desiredProps:
-            self.CLASSIFY_ON_EDGE = desiredProps['classify-on-edge']
+            self.CLASSIFY_ON_EDGE = True
+            classifyOnEdgeSpec = desiredProps['classify-on-edge']
+            if 'upload-to-cloud'  in classifyOnEdgeSpec:
+                self.CLASSIFY_ON_EDGE_UPLOAD = classifyOnEdgeSpec['upload-to-cloud']
+            else:
+                self.CLASSIFY_ON_EDGE_UPLOAD = False
+            # for the future...
+            self.CLASSIFY_ON_EDGE_FILE_FORMAT = []
+            classifyOnEdgeFileFormatSpec = classifyOnEdgeSpec['file-format']
+            for ff in classifyOnEdgeFileFormatSpec.split(','):
+                self.CLASSIFY_ON_EDGE_FILE_FORMAT.append(ff)
+        else:
+            self.CLASSIFY_ON_EDGE = False
 
 class CaptureStateChangeListener:
     def __init__(self, client, deviceId):
@@ -42,9 +54,10 @@ class CaptureStateChangeListener:
         print('Notified to Edge messeging - {}'.format(content))
 
 class AIonEdgeFileUpdater(FileUpdaterBase):
-    def __init__(self, client, deviceId):
+    def __init__(self, client, deviceId, captureSpec):
         self.client = client
         self.deviceId = deviceId
+        self.captureSpec = captureSpec
     
     async def uploadFile(self, fileName):
         content = '"deviceid":"{0}","data-file":"{1}"'.format(self.deviceId, fileName)
@@ -52,6 +65,8 @@ class AIonEdgeFileUpdater(FileUpdaterBase):
         message = Message(content)
         message.custom_properties['message-source']='sound-capturing'
         self.client.send_message_to_output(message, 'output_data_file')
+        if self.Fowarder is not None:
+            self.Fowarder.uploadFile(fileName)
 
 class SoundCaptureExecuter:
     def __init__(self, capture):
@@ -150,7 +165,9 @@ async def main(micCapture):
             captureSpec = resolveCaptureSetting(currentTwin['desired'])
             capturingFileUpdater = None
             if captureSpec.CLASSIFY_ON_EDGE:
-                capturingFileUpdater = AIonEdgeFileUpdater(module_client, IOTEDGE_DEVICEID)
+                capturingFileUpdater = AIonEdgeFileUpdater(module_client, IOTEDGE_DEVICEID, captureSpec)
+                if captureSpec.CLASSIFY_ON_EDGE_UPLOAD:
+                    capturingFileUpdater.Fowarder = BlobFileUpdater(BLOB_ON_EDGE_MODULE, BLOB_ON_EDGE_ACCOUNT_NAME, BLOB_ON_EDGE_ACCOUNT_KEY, SOUND_CONTAINER_NAME, IOTEDGE_DEVICEID)
             else:
                 capturingFileUpdater = BlobFileUpdater(BLOB_ON_EDGE_MODULE, BLOB_ON_EDGE_ACCOUNT_NAME, BLOB_ON_EDGE_ACCOUNT_KEY, SOUND_CONTAINER_NAME, IOTEDGE_DEVICEID)
 
