@@ -122,22 +122,32 @@ async def main(data_folder_path):
         # define behavior for receiving an input message on input_sound_data
         async def input_sound_data_listener(module_client, soundclassifier):
             while True:
+                print("waiting message from 'input_sound_data'")
                 input_message = module_client.receive_message_on_input("input_sound_data")  # blocking call
                 try:
-                    print("the data in the message received on input_sound_data was ")
-                    print(input_message.data)
-                    msgJson = json.loads(input_message.data)
                     print("custom properties are")
                     print(input_message.custom_properties)
-                    predictedResult = soundclassifier.predict(msgJson['data-file'])
-                    print('Classification Succeeded')
-                    outputMessageJson = {'timestamp':'{0:%Y/%m/%dT%H:%M:%S.%f}'.format(datetime.datetime.now()),'predicted': []}
-                    for p in predictedResult.keys():
-                        outputMessageJson['predicted'].append({'channel':str(p), 'predicted':predictedResult[p]})
-                    content = json.dumps(outputMessageJson)
-                    message = Message(content)
-                    message.custom_properties['message-source']='sound-classifier'
-                    module_client.send_message_to_output(outputMessageJson, "output_classified")
+                    if 'message-source' in input_message.custom_properties:
+                        if input_message.custom_properties['message-source'] == 'sound-capturing':
+                            print("the data in the message received on input_sound_data was ")
+                            tmpFileName = 'data' + soundclassifier.get_fileformat()
+                            targetDataFile = input_message.custom_properties['data-file']
+                            if targetDataFile.endswith(soundclassifier.get_fileformat()):
+                                with open(tmpFileName,'wb') as tf:
+                                    tf.write(input_message.data)
+                                    print('Saved content in {} as {}'.format(targetDataFile,tmpFileName))
+                                predictedResult = soundclassifier.predict(tmpFileName)
+                                print('Classification Succeeded')
+                                os.remove(tmpFileName)
+                                
+                                outputMessageJson = {'timestamp':'{0:%Y/%m/%dT%H:%M:%S.%f}'.format(datetime.datetime.now()),'predicted': []}
+                                for p in predictedResult.keys():
+                                    outputMessageJson['predicted'].append({'channel':str(p), 'predicted':predictedResult[p]})
+                                content = json.dumps(outputMessageJson)
+                                print('result json - {}'.format(content))
+                                message = Message(content)
+                                message.custom_properties['message-source']='sound-classifier'
+                                module_client.send_message_to_output(outputMessageJson, "output_classified")
                 except Exception as e:
                     print('Failed to classify - {0}'.format(e))
                 

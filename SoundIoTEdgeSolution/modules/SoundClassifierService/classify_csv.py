@@ -18,6 +18,9 @@ class SoundClassifier:
 
     def update_data_def(self, data_def_file_path):
         self.data_chunk = load_data_definition(data_def_file_path)
+    
+    def get_fileformat(self):
+        return self.file_format
 
     def predict(self, datafile):
         predicted_results = {}

@@ -39,6 +39,7 @@ class CaptureSpec:
                 self.CLASSIFY_ON_EDGE_FILE_FORMAT.append(ff)
         else:
             self.CLASSIFY_ON_EDGE = False
+        self.Forwarder = None
 
 class CaptureStateChangeListener:
     def __init__(self, client, deviceId):
@@ -60,13 +61,18 @@ class AIonEdgeFileUpdater(FileUpdaterBase):
         self.captureSpec = captureSpec
     
     async def uploadFile(self, fileName):
-        content = '"deviceid":"{0}","data-file":"{1}"'.format(self.deviceId, fileName)
-        content = '{' + content + '}'
-        message = Message(content)
-        message.custom_properties['message-source']='sound-capturing'
-        self.client.send_message_to_output(message, 'output_data_file')
-        if self.Fowarder is not None:
-            self.Fowarder.uploadFile(fileName)
+        with open(fileName,"rb") as df:
+            content = df.read()
+#            content = '"deviceid":"{0}","data-file":"{1}"'.format(self.deviceId, fileName)
+#            content = '{' + content + '}'
+            message = Message(content)
+            message.custom_properties['message-source']='sound-capturing'
+            message.custom_properties['deviceid'] = self.deviceId
+            message.custom_properties['data-file'] = fileName
+            self.client.send_message_to_output(message, 'output_data_file')
+        print('Notified to upload sound data - {}'.format(fileName))
+#        if self.Forwarder is not None:
+#            self.Forwarder.uploadFile(fileName)
 
 class SoundCaptureExecuter:
     def __init__(self, capture):
@@ -165,12 +171,14 @@ async def main(micCapture):
             captureSpec = resolveCaptureSetting(currentTwin['desired'])
             capturingFileUpdater = None
             if captureSpec.CLASSIFY_ON_EDGE:
+                print("AI on Edge mode: ON")
                 capturingFileUpdater = AIonEdgeFileUpdater(module_client, IOTEDGE_DEVICEID, captureSpec)
                 if captureSpec.CLASSIFY_ON_EDGE_UPLOAD:
-                    capturingFileUpdater.Fowarder = BlobFileUpdater(BLOB_ON_EDGE_MODULE, BLOB_ON_EDGE_ACCOUNT_NAME, BLOB_ON_EDGE_ACCOUNT_KEY, SOUND_CONTAINER_NAME, IOTEDGE_DEVICEID)
+                    print(" with Blob on Edge uploader")
+                    capturingFileUpdater.Forwarder = BlobFileUpdater(BLOB_ON_EDGE_MODULE, BLOB_ON_EDGE_ACCOUNT_NAME, BLOB_ON_EDGE_ACCOUNT_KEY, SOUND_CONTAINER_NAME, IOTEDGE_DEVICEID)
             else:
+                print("AI on Edge mode: OFF")
                 capturingFileUpdater = BlobFileUpdater(BLOB_ON_EDGE_MODULE, BLOB_ON_EDGE_ACCOUNT_NAME, BLOB_ON_EDGE_ACCOUNT_KEY, SOUND_CONTAINER_NAME, IOTEDGE_DEVICEID)
-
             while True:
                 try:
                     soundCaptureExecuter = SoundCaptureExecuter(capture)

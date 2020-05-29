@@ -200,10 +200,10 @@
           "record-start-level": 1000,
           "record-duration-msec": 500,
           "capture-channels": "1,2,3,4",
-          "capture-order": false,
-          "classify-on-edge": {
-            "file-format" : "csv,wav"
-          }
+          "capture-order": false
+        },
+        "classify-on-edge": {
+          "file-format" : "csv,wav"
         }
       }
     },

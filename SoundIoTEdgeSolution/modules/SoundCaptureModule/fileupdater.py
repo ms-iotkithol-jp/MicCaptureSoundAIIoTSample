@@ -30,7 +30,7 @@ class BlobFileUpdater(FileUpdaterBase):
     async def initialize(self):
         try:
             await self.containerClient.create_container()
-            print('Created - {} - container',self.soundContainerName)
+            print('Created - {} - container'.format(self.soundContainerName))
         except Exception as e:
             print('Failed to create container - {0}'.format(e))
 
@@ -40,7 +40,7 @@ class BlobFileUpdater(FileUpdaterBase):
         try:
             with open(fileName,'rb') as data:
                 await blobClient.upload_blob(data)
-            print('Updated {0} as {1}', fileName, blobName)
+            print('Updated {0} as {1} to Blob on Edge'.format(fileName, blobName))
         except Exception as e:
             print('Upload failed - {}'.format(e))
 
