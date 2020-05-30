@@ -145,11 +145,14 @@ async def main(data_folder_path):
 #                                    print('channel:{},predicted:{} as type:{}'.format(p,predictedResult[p],type(predictedResult[p])))
                                     channelPredicted = {}
                                     channelPredicted['channel'] = p
-                                    channelPredicted['predicted'] = []
-                                    cindex = 1
-                                    for cdata in predictedResult[p]:
-                                        channelPredicted['predicted'].append({'chunk':cindex,'result':cdata})
-                                    outputMessageJson['channels'].append(channelPredicted)
+                                    if soundclassifier.get_fileformat() == 'csv':
+                                        channelPredicted['predicted'] = []
+                                        cindex = 1
+                                        for cdata in predictedResult[p]:
+                                            channelPredicted['predicted'].append({'chunk':cindex,'result':cdata})
+                                        outputMessageJson['channels'].append(channelPredicted)
+                                    else: # wav
+                                        channelPredicted['predicted'] = predictedResult[p]
                                 content = json.dumps(outputMessageJson)
                                 message = Message(content)
                                 message.custom_properties['message-source']='sound-classifier'
