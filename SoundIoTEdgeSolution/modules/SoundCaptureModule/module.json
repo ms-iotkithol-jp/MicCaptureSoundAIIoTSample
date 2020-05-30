@@ -4,7 +4,7 @@
   "image": {
     "repository": "$CONTAINER_REGISTRY_ADDRESS/soundcapturemodule",
     "tag": {
-      "version": "0.1.1",
+      "version": "0.2.1",
       "platforms": {
         "arm32v7": "./Dockerfile.arm32v7",
         "arm32v7.debug": "./Dockerfile.arm32v7.debug",

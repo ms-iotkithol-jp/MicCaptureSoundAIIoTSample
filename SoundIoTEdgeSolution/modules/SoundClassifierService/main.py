@@ -140,14 +140,21 @@ async def main(data_folder_path):
                                 print('Classification Succeeded')
                                 os.remove(tmpFileName)
                                 
-                                outputMessageJson = {'timestamp':'{0:%Y/%m/%dT%H:%M:%S.%f}'.format(datetime.datetime.now()),'predicted': []}
+                                outputMessageJson = {'timestamp':'{0:%Y/%m/%dT%H:%M:%S.%f}'.format(datetime.datetime.now()),'channels': []}
                                 for p in predictedResult.keys():
-                                    outputMessageJson['predicted'].append({'channel':str(p), 'predicted':predictedResult[p]})
+#                                    print('channel:{},predicted:{} as type:{}'.format(p,predictedResult[p],type(predictedResult[p])))
+                                    channelPredicted = {}
+                                    channelPredicted['channel'] = p
+                                    channelPredicted['predicted'] = []
+                                    cindex = 1
+                                    for cdata in predictedResult[p]:
+                                        channelPredicted['predicted'].append({'chunk':cindex,'result':cdata})
+                                    outputMessageJson['channels'].append(channelPredicted)
                                 content = json.dumps(outputMessageJson)
-                                print('result json - {}'.format(content))
                                 message = Message(content)
                                 message.custom_properties['message-source']='sound-classifier'
-                                module_client.send_message_to_output(outputMessageJson, "output_classified")
+                                module_client.send_message_to_output(content, "output_classified")
+                                print('sent result:{} to {}'.format(content),'output_classified')
                 except Exception as e:
                     print('Failed to classify - {0}'.format(e))
                 
