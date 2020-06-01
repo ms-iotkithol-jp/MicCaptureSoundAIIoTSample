@@ -157,7 +157,7 @@
         },
         "data-def-file": {
           "url": "< your data define file url >",
-          "name": " your data define file name"
+          "name": "< your data define file name >"
         }
       }
     }
