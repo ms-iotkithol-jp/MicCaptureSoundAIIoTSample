@@ -1,0 +1,11 @@
+
+*.cache
+*.dll
+*.exe
+*.resources
+*.pdb
+*.baml
+*.lref
+*.props
+*.targets
+*.CopyComplete

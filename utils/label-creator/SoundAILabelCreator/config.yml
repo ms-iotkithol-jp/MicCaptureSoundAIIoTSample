@@ -1,0 +1,10 @@
+storage-account:
+  connection-string:  < - your azure storage account connection string - >
+  container-name: < - your blob container name - >
+iot-hub:
+  # connection string should be select that can use service and readWrite registry capablity.
+  connection-string:  < - your azure iot hub service+registryread connection string - >
+  edge-name: < - your edge device id- >
+labels:
+  - major
+  - minor
