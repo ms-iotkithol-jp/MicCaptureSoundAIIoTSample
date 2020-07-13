@@ -4,7 +4,7 @@
   "image": {
     "repository": "$CONTAINER_REGISTRY_ADDRESS/soundclassifierservice",
     "tag": {
-      "version": "0.1.1",
+      "version": "0.1.2",
       "platforms": {
         "arm64": "./Dockerfile.arm64",
         "arm32v7": "./Dockerfile.arm32v7",

@@ -61,15 +61,15 @@ class AIonEdgeFileUpdater(FileUpdaterBase):
         self.captureSpec = captureSpec
     
     async def uploadFile(self, fileName):
-        with open(fileName,"rb") as df:
-            content = df.read()
+#        with open(fileName,"rb") as df:
+#            content = df.read()
 #            content = '"deviceid":"{0}","data-file":"{1}"'.format(self.deviceId, fileName)
 #            content = '{' + content + '}'
-            message = Message(content)
-            message.custom_properties['message-source']='sound-capturing'
-            message.custom_properties['deviceid'] = self.deviceId
-            message.custom_properties['data-file'] = fileName
-            self.client.send_message_to_output(message, 'output_data_file')
+        message = Message(content)
+        message.custom_properties['message-source']='sound-capturing'
+        message.custom_properties['deviceid'] = self.deviceId
+        message.custom_properties['data-file'] = fileName
+        self.client.send_message_to_output(message, 'output_data_file')
         print('Notified to upload sound data - {}'.format(fileName))
 #        if self.Forwarder is not None:
 #            self.Forwarder.uploadFile(fileName)

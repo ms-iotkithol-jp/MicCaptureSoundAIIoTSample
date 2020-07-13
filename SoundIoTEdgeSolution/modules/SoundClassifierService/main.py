@@ -181,7 +181,7 @@ async def main(data_folder_path):
 
         # Run the stdin listener in the event loop
         loop = asyncio.get_event_loop()
-        user_finished = loop.run_in_executor(None, stdin_listener)
+        user_finished = loop.run_in_executor(None, listeners)
 
         # Wait for user to indicate they are done listening for messages
         await user_finished

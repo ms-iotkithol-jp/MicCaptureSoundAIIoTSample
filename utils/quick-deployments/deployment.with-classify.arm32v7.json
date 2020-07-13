@@ -88,7 +88,7 @@
             "status": "running",
             "restartPolicy": "always",
             "settings": {
-              "image": "embeddedgeorge/soundclassifierservice:0.1.0-arm32v7",
+              "image": "embeddedgeorge/soundclassifierservice:0.1.2-arm32v7",
               "createOptions": "{\"Binds\":[\"/sounddata:/sounddata\"]}"
             },
             "env": {
